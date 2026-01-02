@@ -1,0 +1,3 @@
+VitalID,UserID,HeartRate,BloodPressureSys,BloodPressureDia,OxygenSaturation,Notes,DoctorReaction,RecordedDate,RecordedTime
+17389234,1234567890,80,120,80,98,Feeling good,,1/2/2026,10:30:00 AM
+1767378905440,1767378885823,99,90,98,99.6,hekladas,STABLE,1/2/2026,11:35:05 PM

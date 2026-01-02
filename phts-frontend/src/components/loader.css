@@ -1,0 +1,28 @@
+/* ECG / Heartbeat Loader */
+
+.loading svg polyline {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.loading svg polyline#back {
+  stroke: rgba(239, 68, 68, 0.25); /* light medical red */
+}
+
+.loading svg polyline#front {
+  stroke: #ef4444; /* hospital red */
+  stroke-dasharray: 48, 144;
+  stroke-dashoffset: 192;
+  animation: dash_heartbeat 1.4s linear infinite;
+}
+
+@keyframes dash_heartbeat {
+  72.5% {
+    opacity: 0;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}

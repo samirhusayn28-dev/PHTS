@@ -1,0 +1,11 @@
+BadgeID,BadgeName,Description,PointsRequired,IconPath
+1,Heart Healthy,7 consecutive days of normal heart rate readings,100,/icons/heart_healthy.png
+2,Blood Pressure Pro,7 consecutive days of normal blood pressure readings,150,/icons/bp_pro.png
+3,Oxygen Champion,7 consecutive days of normal oxygen saturation levels,120,/icons/oxygen_champ.png
+4,Consistency King,Logged vitals for 30 consecutive days,200,/icons/consistency_king.png
+5,Early Bird,Logged morning vitals for 7 consecutive days,80,/icons/early_bird.png
+6,Night Owl,Logged evening vitals for 7 consecutive days,80,/icons/night_owl.png
+7,Week Warrior,Completed all weekly health goals,250,/icons/week_warrior.png
+8,Monthly Master,Achieved all monthly health targets,500,/icons/monthly_master.png
+9,Alert Responder,Acknowledged 10 consecutive alerts promptly,180,/icons/alert_responder.png
+10,Health Guardian,No critical alerts for 30 consecutive days,300,/icons/health_guardian.png

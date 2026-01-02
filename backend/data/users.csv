@@ -1,0 +1,5 @@
+id,name,email,password,role,reference
+1234567890,Ahmed,patient@test.com,123,patient,PAT-5678
+9876543210,Dr Khan,doctor@test.com,123,doctor,DOC-1234
+1767378885823,Samir Husayn,sameerhussainsoomro09@gmail.com,sameer110,patient,PAT-2514
+1767378934072,sameer hussain,sameerhussainsoomro.net@gmail.com,sam110,doctor,DOC-2560
