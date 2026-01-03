@@ -7,6 +7,7 @@ import {
   MessageCircle,
   Link2
 } from "lucide-react";
+import { API_URL } from "./config";
 
 function DoctorDashboard({ user, onLogout }) {
   const DOCTOR_REF = user.reference;
@@ -30,7 +31,7 @@ function DoctorDashboard({ user, onLogout }) {
     setLoading(true);
     setError("");
 
-    fetch(`http://localhost:5000/api/vitals/by-ref/${patientRef}`)
+    fetch(`${API_URL}/api/vitals/by-ref/${patientRef}`)
       .then(r => {
         console.log("Response status:", r.status);
         return r.json();
@@ -59,7 +60,7 @@ function DoctorDashboard({ user, onLogout }) {
 
     console.log("🔗 Linking patient:", patientRef, "to doctor:", DOCTOR_REF);
 
-    fetch("http://localhost:5000/api/link", {
+    fetch(`${API_URL}/api/link`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -74,7 +75,6 @@ function DoctorDashboard({ user, onLogout }) {
           alert(data.error);
         } else {
           alert("Patient linked successfully!");
-          // Auto-load patient after linking
           setTimeout(() => {
             loadPatient();
           }, 500);
@@ -89,7 +89,7 @@ function DoctorDashboard({ user, onLogout }) {
   function setReaction(vitalId, reaction) {
     console.log("💬 Setting reaction:", vitalId, "->", reaction);
 
-    fetch(`http://localhost:5000/api/vitals/reaction/${vitalId}`, {
+    fetch(`${API_URL}/api/vitals/reaction/${vitalId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reaction })
@@ -109,7 +109,7 @@ function DoctorDashboard({ user, onLogout }) {
     
     console.log("📬 Loading messages for:", DOCTOR_REF);
     
-    fetch(`http://localhost:5000/api/messages/${DOCTOR_REF}`)
+    fetch(`${API_URL}/api/messages/${DOCTOR_REF}`)
       .then(r => r.json())
       .then(d => {
         console.log("All messages:", d);
@@ -126,7 +126,7 @@ function DoctorDashboard({ user, onLogout }) {
   function sendMessage() {
     if (!msgText.trim() || !currentPatient) return;
     
-    fetch("http://localhost:5000/api/messages", {
+    fetch(`${API_URL}/api/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

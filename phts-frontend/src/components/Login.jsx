@@ -4,6 +4,7 @@ import AuthModal from "./AuthModal";
 import RoleSwitch from "./RoleSwitch";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
+import { API_URL } from "./config";
 
 function Login({ onLogin }) {
   const [role, setRole] = useState("patient");
@@ -16,7 +17,7 @@ function Login({ onLogin }) {
   async function loginSubmit(e) {
     e.preventDefault();
 
-    const r = await fetch("http://localhost:5000/api/users/login", {
+    const r = await fetch(`${API_URL}/api/users/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
@@ -43,7 +44,7 @@ function Login({ onLogin }) {
       return alert("Only @gmail.com emails are allowed!");
     }
 
-    const r = await fetch("http://localhost:5000/api/users/signup", {
+    const r = await fetch(`${API_URL}/api/users/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, role })
@@ -82,7 +83,7 @@ function Login({ onLogin }) {
             }
 
             // Send to backend
-            const r = await fetch("http://localhost:5000/api/users/google-signin", {
+            const r = await fetch(`${API_URL}/api/users/google-signin`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({

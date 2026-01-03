@@ -9,6 +9,7 @@ import {
   MessageCircle,
   UserX
 } from "lucide-react";
+import { API_URL } from "./config";
 
 const EMPTY_VITAL = {
   HeartRate: "",
@@ -36,7 +37,7 @@ function PatientDashboard({ user, onLogout }) {
   function loadVitals() {
     console.log("🔄 Loading vitals for UserID:", USER_ID);
     setLoading(true);
-    fetch(`http://localhost:5000/api/vitals/${USER_ID}`)
+    fetch(`${API_URL}/api/vitals/${USER_ID}`)
       .then(r => {
         console.log("Response status:", r.status);
         return r.json();
@@ -56,7 +57,7 @@ function PatientDashboard({ user, onLogout }) {
 
   /* ================= LOAD LINKED DOCTOR ================= */
   function loadLinkedDoctor() {
-    fetch(`http://localhost:5000/api/link/doctor/${PATIENT_REF}`)
+    fetch(`${API_URL}/api/link/doctor/${PATIENT_REF}`)
       .then(r => r.json())
       .then(data => {
         console.log("Linked doctor:", data);
@@ -67,7 +68,7 @@ function PatientDashboard({ user, onLogout }) {
 
   /* ================= LOAD MESSAGES ================= */
   function loadMessages() {
-    fetch(`http://localhost:5000/api/messages/${PATIENT_REF}`)
+    fetch(`${API_URL}/api/messages/${PATIENT_REF}`)
       .then(r => r.json())
       .then(d => {
         console.log("Messages loaded:", d);
@@ -79,7 +80,7 @@ function PatientDashboard({ user, onLogout }) {
   /* ================= UNLINK DOCTOR ================= */
   function unlinkDoctor() {
     if (!window.confirm("Are you sure you want to unlink from your doctor?")) return;
-    fetch(`http://localhost:5000/api/link/${PATIENT_REF}`, {
+    fetch(`${API_URL}/api/link/${PATIENT_REF}`, {
       method: "DELETE"
     }).then(() => {
       setLinkedDoctor(null);
@@ -90,7 +91,7 @@ function PatientDashboard({ user, onLogout }) {
   /* ================= SEND MESSAGE ================= */
   function sendMessage() {
     if (!msgText.trim() || !linkedDoctor) return;
-    fetch("http://localhost:5000/api/messages", {
+    fetch(`${API_URL}/api/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -134,7 +135,7 @@ function PatientDashboard({ user, onLogout }) {
 
     console.log("📤 Sending payload:", payload);
 
-    fetch("http://localhost:5000/api/vitals", {
+    fetch(`${API_URL}/api/vitals`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -148,7 +149,6 @@ function PatientDashboard({ user, onLogout }) {
         setShowForm(false);
         setForm(EMPTY_VITAL);
         alert("Vital saved successfully!");
-        // Reload vitals after 500ms
         setTimeout(() => {
           console.log("🔄 Reloading vitals after save...");
           loadVitals();
@@ -222,7 +222,7 @@ function PatientDashboard({ user, onLogout }) {
         </button>
 
         <a
-          href="http://localhost:5000/api/vitals/download/all"
+          href={`${API_URL}/api/vitals/download/all`}
           className="flex gap-2 bg-slate-700 px-6 py-3 rounded-xl hover:bg-slate-600"
         >
           <Download size={18}/> Download History
