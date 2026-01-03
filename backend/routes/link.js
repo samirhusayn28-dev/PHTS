@@ -1,55 +1,9 @@
 const express = require("express");
-const fs = require("fs");
-const path = require("path");
 const router = express.Router();
+const Link = require("../models/Link");
 
-const file = path.join(__dirname, "../data/DoctorPatientMapping.csv");
-
-// Initialize file if doesn't exist
-if (!fs.existsSync(file)) {
-  fs.writeFileSync(file, "DoctorRef,PatientRef\n");
-}
-
-function read() {
-  try {
-    if (!fs.existsSync(file)) return [];
-    const content = fs.readFileSync(file, "utf8").trim();
-    if (!content) return [];
-    
-    const lines = content.split("\n");
-    if (lines.length < 2) return [];
-    
-    const [h, ...r] = lines;
-    const heads = h.split(",");
-    
-    return r.map(l => {
-      const o = {};
-      l.split(",").forEach((v, i) => (o[heads[i]] = v));
-      return o;
-    });
-  } catch (err) {
-    console.error("Error reading links:", err);
-    return [];
-  }
-}
-
-function write(d) {
-  try {
-    if (!d.length) {
-      fs.writeFileSync(file, "DoctorRef,PatientRef\n");
-      return;
-    }
-    const h = Object.keys(d[0]).join(",");
-    const r = d.map(x => Object.values(x).join(","));
-    fs.writeFileSync(file, [h, ...r].join("\n"));
-    console.log("💾 Links saved:", d.length);
-  } catch (err) {
-    console.error("Error writing links:", err);
-  }
-}
-
-/* LINK DOCTOR-PATIENT */
-router.post("/", (req, res) => {
+/* ===== LINK DOCTOR-PATIENT ===== */
+router.post("/", async (req, res) => {
   try {
     console.log("🔗 Link request:", req.body);
     
@@ -58,21 +12,22 @@ router.post("/", (req, res) => {
     if (!DoctorRef || !PatientRef) {
       return res.status(400).json({ error: "Missing DoctorRef or PatientRef" });
     }
-    
-    const all = read();
-    
-    // Check if already linked
-    const existing = all.find(x => x.PatientRef === PatientRef);
+
+    const existing = await Link.findOne({ patientRef: PatientRef });
     if (existing) {
-      console.log("⚠️ Patient already linked to:", existing.DoctorRef);
+      console.log("⚠️ Patient already linked to:", existing.doctorRef);
       return res.json({ 
-        error: `Patient already linked to ${existing.DoctorRef}`,
+        error: `Patient already linked to ${existing.doctorRef}`,
         success: false 
       });
     }
 
-    all.push({ DoctorRef, PatientRef });
-    write(all);
+    const link = new Link({
+      doctorRef: DoctorRef,
+      patientRef: PatientRef
+    });
+
+    await link.save();
     
     console.log("✅ Linked successfully:", DoctorRef, "<->", PatientRef);
     res.json({ success: true });
@@ -82,38 +37,48 @@ router.post("/", (req, res) => {
   }
 });
 
-/* GET LINKED DOCTOR FOR PATIENT */
-router.get("/doctor/:pref", (req, res) => {
+/* ===== GET LINKED DOCTOR FOR PATIENT ===== */
+router.get("/doctor/:pref", async (req, res) => {
   try {
-    const all = read();
-    const link = all.find(x => x.PatientRef === req.params.pref);
+    const link = await Link.findOne({ patientRef: req.params.pref });
     console.log(`🔍 Finding doctor for ${req.params.pref}:`, link || "Not found");
-    res.json(link || null);
+    
+    if (!link) {
+      return res.json(null);
+    }
+
+    res.json({
+      DoctorRef: link.doctorRef,
+      PatientRef: link.patientRef
+    });
   } catch (err) {
     console.error("Error finding doctor:", err);
     res.json(null);
   }
 });
 
-/* GET ALL PATIENTS FOR DOCTOR */
-router.get("/patients/:dref", (req, res) => {
+/* ===== GET ALL PATIENTS FOR DOCTOR ===== */
+router.get("/patients/:dref", async (req, res) => {
   try {
-    const all = read();
-    const patients = all.filter(x => x.DoctorRef === req.params.dref);
-    console.log(`🔍 Patients for ${req.params.dref}:`, patients.length);
-    res.json(patients);
+    const links = await Link.find({ doctorRef: req.params.dref });
+    console.log(`🔍 Patients for ${req.params.dref}:`, links.length);
+    
+    const formatted = links.map(l => ({
+      DoctorRef: l.doctorRef,
+      PatientRef: l.patientRef
+    }));
+
+    res.json(formatted);
   } catch (err) {
     console.error("Error finding patients:", err);
     res.json([]);
   }
 });
 
-/* UNLINK PATIENT FROM DOCTOR */
-router.delete("/:pref", (req, res) => {
+/* ===== UNLINK PATIENT FROM DOCTOR ===== */
+router.delete("/:pref", async (req, res) => {
   try {
-    const all = read();
-    const filtered = all.filter(x => x.PatientRef !== req.params.pref);
-    write(filtered);
+    await Link.deleteOne({ patientRef: req.params.pref });
     console.log("🔓 Unlinked patient:", req.params.pref);
     res.json({ success: true });
   } catch (err) {

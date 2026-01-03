@@ -1,18 +1,22 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const connectDB = require("./config/database");
 
 const app = express();
 
-// ✅ CORS Configuration (pehle karo, routes se pehle)
+// Connect to MongoDB
+connectDB();
+
+// CORS Configuration
 app.use(cors({
   origin: [
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://phts-samirhusayn28-devs-projects.vercel.app/"  // ⚠️ Apna actual Vercel URL yahan dalo
+    "https://phts-samirhusayn28-devs-projects.vercel.app"  // ⚠️ Apna actual Vercel URL dalo
   ],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  methods: ["GET", "POST", "PUT", "DELETE"]
 }));
 
 app.use(express.json());
@@ -23,17 +27,12 @@ app.use("/api/vitals", require("./routes/vitals"));
 app.use("/api/link", require("./routes/link"));
 app.use("/api/messages", require("./routes/messages"));
 
-// Health check endpoint (deployment testing ke liye)
+// Health check
 app.get("/", (req, res) => {
   res.json({ 
-    status: "✅ PHTS Backend is running!",
+    status: "✅ PHTS Backend running with MongoDB!",
     timestamp: new Date().toISOString()
   });
-});
-
-// 404 Handler
-app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
 });
 
 // Error Handler
@@ -42,10 +41,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-// Port Configuration (Railway/Render automatically provide PORT)
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
-  console.log(`✅ Backend running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
