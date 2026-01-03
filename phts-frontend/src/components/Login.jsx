@@ -9,6 +9,7 @@ import { API_URL } from "./config";
 function Login({ onLogin }) {
   const [role, setRole] = useState("patient");
   const [mode, setMode] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,24 +17,34 @@ function Login({ onLogin }) {
 
   async function loginSubmit(e) {
     e.preventDefault();
+    setLoading(true);
 
-    const r = await fetch(`${API_URL}/api/users/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
+    try {
+      const r = await fetch(`${API_URL}/api/users/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
 
-    const d = await r.json();
-    if (!r.ok) return alert(d.error);
+      const d = await r.json();
+      if (!r.ok) {
+        alert(d.error || "Login failed");
+        return;
+      }
 
-    // 🔥 ROLE CHECK (IMPORTANT)
-    if (d.role !== role) {
-      return alert(
-        `This account is registered as ${d.role}. Please switch role.`
-      );
+      // 🔥 ROLE CHECK (IMPORTANT)
+      if (d.role !== role) {
+        alert(`This account is registered as ${d.role}. Please switch role.`);
+        return;
+      }
+
+      onLogin(d);
+    } catch (err) {
+      console.error("Login error:", err);
+      alert(`Connection failed. Please check:\n1. Backend is running\n2. No ad blocker is active\n3. API URL: ${API_URL}`);
+    } finally {
+      setLoading(false);
     }
-
-    onLogin(d);
   }
 
   async function signupSubmit(e) {
@@ -41,26 +52,40 @@ function Login({ onLogin }) {
 
     // ✅ Email validation on frontend
     if (!email.endsWith("@gmail.com")) {
-      return alert("Only @gmail.com emails are allowed!");
+      alert("Only @gmail.com emails are allowed!");
+      return;
     }
 
-    const r = await fetch(`${API_URL}/api/users/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, role })
-    });
+    setLoading(true);
 
-    const d = await r.json();
-    if (!r.ok) return alert(d.error);
+    try {
+      const r = await fetch(`${API_URL}/api/users/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role })
+      });
 
-    onLogin(d);
+      const d = await r.json();
+      if (!r.ok) {
+        alert(d.error || "Signup failed");
+        return;
+      }
+
+      onLogin(d);
+    } catch (err) {
+      console.error("Signup error:", err);
+      alert(`Connection failed. Please check:\n1. Backend is running at ${API_URL}\n2. No ad blocker is blocking the request\n3. CORS is properly configured\n\nError: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   }
 
   // ✅ GOOGLE SIGN-IN HANDLER
   async function handleGoogleSignIn() {
     // Load Google Sign-In API
     if (!window.google) {
-      return alert("Google Sign-In is loading... Please try again in a moment.");
+      alert("Google Sign-In is loading... Please try again in a moment.");
+      return;
     }
 
     try {
@@ -69,34 +94,46 @@ function Login({ onLogin }) {
         scope: "email profile",
         callback: async (response) => {
           if (response.access_token) {
-            // Get user info from Google
-            const userInfo = await fetch(
-              `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${response.access_token}`
-            );
-            const userData = await userInfo.json();
+            setLoading(true);
+            try {
+              // Get user info from Google
+              const userInfo = await fetch(
+                `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${response.access_token}`
+              );
+              const userData = await userInfo.json();
 
-            console.log("Google user data:", userData);
+              console.log("Google user data:", userData);
 
-            // Only allow Gmail
-            if (!userData.email.endsWith("@gmail.com")) {
-              return alert("Only @gmail.com emails are allowed!");
+              // Only allow Gmail
+              if (!userData.email.endsWith("@gmail.com")) {
+                alert("Only @gmail.com emails are allowed!");
+                return;
+              }
+
+              // Send to backend
+              const r = await fetch(`${API_URL}/api/users/google-signin`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  email: userData.email,
+                  name: userData.name,
+                  role: role
+                })
+              });
+
+              const user = await r.json();
+              if (!r.ok) {
+                alert(user.error || "Google sign-in failed");
+                return;
+              }
+
+              onLogin(user);
+            } catch (err) {
+              console.error("Google Sign-In backend error:", err);
+              alert(`Failed to complete Google sign-in: ${err.message}`);
+            } finally {
+              setLoading(false);
             }
-
-            // Send to backend
-            const r = await fetch(`${API_URL}/api/users/google-signin`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: userData.email,
-                name: userData.name,
-                role: role
-              })
-            });
-
-            const user = await r.json();
-            if (!r.ok) return alert(user.error);
-
-            onLogin(user);
           }
         }
       });
@@ -114,13 +151,26 @@ function Login({ onLogin }) {
         <RoleSwitch role={role} setRole={setRole} />
 
         <div className="space-y-4 mt-6">
-          <button onClick={() => setMode("login")} className="w-full py-4 bg-blue-600 rounded-xl">
-            Sign in
+          <button 
+            onClick={() => setMode("login")} 
+            className="w-full py-4 bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? "Loading..." : "Sign in"}
           </button>
-          <button onClick={() => setMode("signup")} className="w-full py-4 bg-white/10 rounded-xl">
-            Create account
+          <button 
+            onClick={() => setMode("signup")} 
+            className="w-full py-4 bg-white/10 rounded-xl hover:bg-white/20 disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? "Loading..." : "Create account"}
           </button>
         </div>
+
+        {/* Debug info (remove in production) */}
+        <p className="text-xs text-slate-500 mt-4 text-center">
+          API: {API_URL}
+        </p>
       </div>
 
       {mode === "login" && (
@@ -132,6 +182,7 @@ function Login({ onLogin }) {
             setPassword={setPassword}
             onSubmit={loginSubmit}
             onGoogleSignIn={handleGoogleSignIn}
+            loading={loading}
           />
         </AuthModal>
       )}
@@ -147,6 +198,7 @@ function Login({ onLogin }) {
             setPassword={setPassword}
             onSubmit={signupSubmit}
             onGoogleSignIn={handleGoogleSignIn}
+            loading={loading}
           />
         </AuthModal>
       )}
