@@ -9,7 +9,7 @@ import {
   MessageCircle,
   UserX
 } from "lucide-react";
-import { API_URL } from "./config";
+import { API_URL } from "../components/config";
 
 const EMPTY_VITAL = {
   HeartRate: "",

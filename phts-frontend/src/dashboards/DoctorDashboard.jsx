@@ -7,7 +7,7 @@ import {
   MessageCircle,
   Link2
 } from "lucide-react";
-import { API_URL } from "./config";
+import { API_URL } from "../components/config";
 
 function DoctorDashboard({ user, onLogout }) {
   const DOCTOR_REF = user.reference;
