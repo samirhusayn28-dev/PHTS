@@ -154,17 +154,17 @@ function DoctorDashboard({ user, onLogout }) {
   ).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 text-white p-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 text-white p-4 sm:p-6 lg:p-10">
 
-      {/* HEADER */}
-      <div className="flex justify-between mb-12">
+      {/* HEADER - Responsive */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 sm:mb-12">
         <div>
-          <h1 className="text-4xl font-bold">Hey Doctor {user.name} 🩺</h1>
-          <p className="text-slate-400">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Hey Doctor {user.name} 🩺</h1>
+          <p className="text-slate-400 text-sm sm:text-base">
             Doctor Ref: <b className="text-blue-400">{DOCTOR_REF}</b>
           </p>
           {currentPatient && (
-            <p className="text-green-400 text-sm mt-1">
+            <p className="text-green-400 text-xs sm:text-sm mt-1">
               Current Patient: {currentPatient}
             </p>
           )}
@@ -176,17 +176,17 @@ function DoctorDashboard({ user, onLogout }) {
 
       {/* ERROR MESSAGE */}
       {error && (
-        <div className="bg-red-500/20 border border-red-500 p-4 rounded-xl mb-6">
-          <p className="text-red-300">⚠️ {error}</p>
+        <div className="bg-red-500/20 border border-red-500 p-3 sm:p-4 rounded-xl mb-4 sm:mb-6">
+          <p className="text-red-300 text-sm sm:text-base">⚠️ {error}</p>
         </div>
       )}
 
-      {/* LOAD PATIENT */}
-      <div className="flex gap-4 mb-10">
+      {/* LOAD PATIENT - Responsive */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-10">
         <input
           type="text"
           placeholder="Enter Patient Reference (e.g., PAT-1234)"
-          className="flex-1 p-4 rounded-xl bg-white/10 text-white placeholder-slate-400"
+          className="flex-1 p-3 sm:p-4 rounded-xl bg-white/10 text-white placeholder-slate-400 text-sm sm:text-base"
           value={patientRef}
           onChange={e => setPatientRef(e.target.value)}
           onKeyPress={e => e.key === "Enter" && loadPatient()}
@@ -194,14 +194,14 @@ function DoctorDashboard({ user, onLogout }) {
         <button
           onClick={loadPatient}
           disabled={loading}
-          className="bg-blue-600 px-8 py-4 rounded-xl hover:bg-blue-700 disabled:opacity-50"
+          className="bg-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-blue-700 disabled:opacity-50 text-sm sm:text-base whitespace-nowrap"
         >
           {loading ? "Loading..." : "Load Patient"}
         </button>
         <button
           onClick={linkPatient}
           disabled={loading}
-          className="bg-green-600 px-8 py-4 rounded-xl hover:bg-green-700 flex gap-2 items-center disabled:opacity-50"
+          className="bg-green-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-green-700 flex gap-2 items-center justify-center disabled:opacity-50 text-sm sm:text-base whitespace-nowrap"
         >
           <Link2 size={18}/> Link Patient
         </button>
@@ -210,15 +210,15 @@ function DoctorDashboard({ user, onLogout }) {
       {vitals.length > 0 && (
         <button
           onClick={() => setShowMessages(true)}
-          className="mb-6 bg-purple-600 px-6 py-3 rounded-xl hover:bg-purple-700 flex gap-2 items-center"
+          className="mb-4 sm:mb-6 bg-purple-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-purple-700 flex gap-2 items-center text-sm sm:text-base"
         >
           <MessageCircle size={18}/> Messages with {currentPatient}
         </button>
       )}
 
-      {/* STATS */}
+      {/* STATS - Responsive Grid */}
       {vitals.length > 0 && (
-        <div className="grid grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-10">
           <Stat icon={<HeartPulse/>} title="Total Vitals" value={vitals.length}/>
           <Stat icon={<AlertTriangle/>} title="Critical" value={critical}/>
           <Stat icon={<Activity/>} title="Normal" value={vitals.length - critical}/>
@@ -233,89 +233,91 @@ function DoctorDashboard({ user, onLogout }) {
         </div>
       )}
 
-      {/* TABLE */}
+      {/* TABLE - Responsive with horizontal scroll */}
       {vitals.length > 0 ? (
         <div className="bg-white/5 rounded-3xl overflow-hidden">
-          <div className="bg-white/10 p-4">
-            <h2 className="text-xl font-semibold">Patient Vitals - {currentPatient}</h2>
+          <div className="bg-white/10 p-3 sm:p-4">
+            <h2 className="text-lg sm:text-xl font-semibold">Patient Vitals - {currentPatient}</h2>
           </div>
-          <table className="w-full text-sm">
-            <thead className="bg-white/10">
-              <tr>
-                <th className="p-4 text-left">Date</th>
-                <th className="p-4 text-left">Time</th>
-                <th className="p-4 text-center">HR</th>
-                <th className="p-4 text-center">BP</th>
-                <th className="p-4 text-center">O₂</th>
-                <th className="p-4 text-left">Notes</th>
-                <th className="p-4 text-center">Current Reaction</th>
-                <th className="p-4 text-center">Set Reaction</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vitals.map((v, idx) => {
-                const hrHigh = Number(v.HeartRate) > 100;
-                const bpHigh = Number(v.BloodPressureSys) > 130;
-                const o2Low = Number(v.OxygenSaturation) < 95;
-                
-                return (
-                  <tr key={v.VitalID || idx} className="border-t border-white/10">
-                    <td className="p-4 text-left">{v.RecordedDate}</td>
-                    <td className="p-4 text-left">{v.RecordedTime}</td>
-                    <td className={`p-4 text-center font-bold ${hrHigh ? "text-red-400" : ""}`}>
-                      {v.HeartRate}
-                    </td>
-                    <td className={`p-4 text-center font-bold ${bpHigh ? "text-red-400" : ""}`}>
-                      {v.BloodPressureSys}/{v.BloodPressureDia}
-                    </td>
-                    <td className={`p-4 text-center font-bold ${o2Low ? "text-red-400" : ""}`}>
-                      {v.OxygenSaturation}%
-                    </td>
-                    <td className="p-4 text-left text-xs">{v.Notes || "-"}</td>
-                    <td className="p-4 text-center">
-                      {v.DoctorReaction === "IMPROVING" && "😊 Improving"}
-                      {v.DoctorReaction === "STABLE" && "😐 Stable"}
-                      {v.DoctorReaction === "CRITICAL" && "☹️ Critical"}
-                      {!v.DoctorReaction && "⏳ Pending"}
-                    </td>
-                    <td className="p-4 text-center">
-                      <select
-                        className="bg-slate-700 p-2 rounded text-white cursor-pointer"
-                        value={v.DoctorReaction || ""}
-                        onChange={e => setReaction(v.VitalID, e.target.value)}
-                      >
-                        <option value="">Select Reaction</option>
-                        <option value="IMPROVING">😊 Improving</option>
-                        <option value="STABLE">😐 Stable</option>
-                        <option value="CRITICAL">☹️ Critical</option>
-                      </select>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs sm:text-sm min-w-[800px]">
+              <thead className="bg-white/10">
+                <tr>
+                  <th className="p-2 sm:p-4 text-left">Date</th>
+                  <th className="p-2 sm:p-4 text-left">Time</th>
+                  <th className="p-2 sm:p-4 text-center">HR</th>
+                  <th className="p-2 sm:p-4 text-center">BP</th>
+                  <th className="p-2 sm:p-4 text-center">O₂</th>
+                  <th className="p-2 sm:p-4 text-left">Notes</th>
+                  <th className="p-2 sm:p-4 text-center">Current</th>
+                  <th className="p-2 sm:p-4 text-center">Set Reaction</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vitals.map((v, idx) => {
+                  const hrHigh = Number(v.HeartRate) > 100;
+                  const bpHigh = Number(v.BloodPressureSys) > 130;
+                  const o2Low = Number(v.OxygenSaturation) < 95;
+                  
+                  return (
+                    <tr key={v.VitalID || idx} className="border-t border-white/10">
+                      <td className="p-2 sm:p-4 text-left">{v.RecordedDate}</td>
+                      <td className="p-2 sm:p-4 text-left">{v.RecordedTime}</td>
+                      <td className={`p-2 sm:p-4 text-center font-bold ${hrHigh ? "text-red-400" : ""}`}>
+                        {v.HeartRate}
+                      </td>
+                      <td className={`p-2 sm:p-4 text-center font-bold ${bpHigh ? "text-red-400" : ""}`}>
+                        {v.BloodPressureSys}/{v.BloodPressureDia}
+                      </td>
+                      <td className={`p-2 sm:p-4 text-center font-bold ${o2Low ? "text-red-400" : ""}`}>
+                        {v.OxygenSaturation}%
+                      </td>
+                      <td className="p-2 sm:p-4 text-left text-xs">{v.Notes || "-"}</td>
+                      <td className="p-2 sm:p-4 text-center whitespace-nowrap">
+                        {v.DoctorReaction === "IMPROVING" && "😊"}
+                        {v.DoctorReaction === "STABLE" && "😐"}
+                        {v.DoctorReaction === "CRITICAL" && "☹️"}
+                        {!v.DoctorReaction && "⏳"}
+                      </td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <select
+                          className="bg-slate-700 p-2 rounded text-white cursor-pointer text-xs sm:text-sm"
+                          value={v.DoctorReaction || ""}
+                          onChange={e => setReaction(v.VitalID, e.target.value)}
+                        >
+                          <option value="">Select</option>
+                          <option value="IMPROVING">😊 Improving</option>
+                          <option value="STABLE">😐 Stable</option>
+                          <option value="CRITICAL">☹️ Critical</option>
+                        </select>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : !loading && (
-        <div className="bg-white/5 rounded-3xl p-10 text-center text-slate-400">
+        <div className="bg-white/5 rounded-3xl p-6 sm:p-10 text-center text-slate-400">
           <Activity size={48} className="mx-auto mb-4 opacity-50" />
-          <p className="text-lg">Enter a patient reference and click "Load Patient" to view their vitals</p>
-          <p className="text-sm mt-2">Make sure the patient is linked to you first</p>
+          <p className="text-base sm:text-lg">Enter a patient reference and click "Load Patient"</p>
+          <p className="text-xs sm:text-sm mt-2">Make sure the patient is linked to you first</p>
         </div>
       )}
 
-      {/* MESSAGES MODAL */}
+      {/* MESSAGES MODAL - Responsive */}
       {showMessages && currentPatient && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-slate-900 p-8 rounded-3xl w-[500px] max-h-[600px] flex flex-col">
-            <h2 className="text-2xl font-semibold mb-4">Messages with {currentPatient}</h2>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl w-full max-w-[500px] max-h-[90vh] sm:max-h-[600px] flex flex-col">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4">Messages with {currentPatient}</h2>
 
-            <div className="flex-1 overflow-y-auto mb-4 space-y-3 min-h-[300px]">
+            <div className="flex-1 overflow-y-auto mb-4 space-y-3 min-h-[200px] sm:min-h-[300px]">
               {messages.length > 0 ? (
                 messages.map((m, idx) => (
                   <div
                     key={m.id || idx}
-                    className={`p-3 rounded-xl ${
+                    className={`p-3 rounded-xl text-sm ${
                       m.from === DOCTOR_REF
                         ? "bg-blue-600 ml-auto max-w-[80%]"
                         : "bg-slate-700 mr-auto max-w-[80%]"
@@ -337,19 +339,19 @@ function DoctorDashboard({ user, onLogout }) {
               <input
                 type="text"
                 placeholder="Type a message..."
-                className="flex-1 p-3 rounded bg-black/30 text-white"
+                className="flex-1 p-3 rounded bg-black/30 text-white text-sm"
                 value={msgText}
                 onChange={e => setMsgText(e.target.value)}
                 onKeyPress={e => e.key === "Enter" && sendMessage()}
               />
-              <button onClick={sendMessage} className="bg-blue-600 px-6 py-3 rounded hover:bg-blue-700">
+              <button onClick={sendMessage} className="bg-blue-600 px-4 sm:px-6 py-3 rounded hover:bg-blue-700 text-sm">
                 Send
               </button>
             </div>
 
             <button
               onClick={() => setShowMessages(false)}
-              className="mt-4 bg-red-600 py-2 rounded-xl hover:bg-red-700"
+              className="mt-4 bg-red-600 py-2 rounded-xl hover:bg-red-700 text-sm"
             >
               Close
             </button>
@@ -363,10 +365,10 @@ function DoctorDashboard({ user, onLogout }) {
 
 function Stat({ icon, title, value }) {
   return (
-    <div className="bg-white/5 p-6 rounded-3xl">
+    <div className="bg-white/5 p-4 sm:p-6 rounded-3xl">
       <div className="text-blue-400 mb-2">{icon}</div>
-      <p className="text-slate-400">{title}</p>
-      <h2 className="text-3xl font-bold">{value}</h2>
+      <p className="text-slate-400 text-sm sm:text-base">{title}</p>
+      <h2 className="text-2xl sm:text-3xl font-bold">{value}</h2>
     </div>
   );
 }

@@ -115,7 +115,6 @@ function PatientDashboard({ user, onLogout }) {
   function saveVital() {
     console.log("💾 Attempting to save vital...");
     
-    // Validation
     if (!form.HeartRate || !form.BloodPressureSys || !form.BloodPressureDia || !form.OxygenSaturation) {
       alert("Please fill all required fields!");
       return;
@@ -168,20 +167,20 @@ function PatientDashboard({ user, onLogout }) {
         );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 text-white p-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 text-white p-4 sm:p-6 lg:p-10">
 
-      {/* HEADER */}
-      <div className="flex justify-between mb-12">
+      {/* HEADER - Responsive */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 sm:mb-12">
         <div>
-          <h1 className="text-4xl font-bold">Hey {user.name} 👋</h1>
-          <p className="text-slate-400">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Hey {user.name} 👋</h1>
+          <p className="text-slate-400 text-sm sm:text-base">
             Patient Ref: <b className="text-blue-400">{PATIENT_REF}</b>
           </p>
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-400 text-xs sm:text-sm">
             User ID: <b className="text-blue-400">{USER_ID}</b>
           </p>
           {linkedDoctor && (
-            <p className="text-green-400 text-sm mt-1">
+            <p className="text-green-400 text-xs sm:text-sm mt-1">
               Linked to Doctor: {linkedDoctor.DoctorRef}
             </p>
           )}
@@ -193,54 +192,54 @@ function PatientDashboard({ user, onLogout }) {
 
       {/* ERROR MESSAGE */}
       {error && (
-        <div className="bg-red-500/20 border border-red-500 p-4 rounded-xl mb-6">
-          <p className="text-red-300">⚠️ {error}</p>
+        <div className="bg-red-500/20 border border-red-500 p-3 sm:p-4 rounded-xl mb-4 sm:mb-6">
+          <p className="text-red-300 text-sm sm:text-base">⚠️ {error}</p>
         </div>
       )}
 
-      {/* STATS */}
-      <div className="grid grid-cols-3 gap-6 mb-10">
+      {/* STATS - Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-10">
         <Bento icon={<HeartPulse/>} label="Average HR" value={`${avgHR} bpm`} />
         <Bento icon={<Activity/>} label="Total Records" value={vitals.length} />
         <Bento icon={<ClipboardList/>} label="Status" value={avgHR > 100 ? "Needs Care" : "Stable"} />
       </div>
 
-      {/* ACTIONS */}
-      <div className="flex gap-4 mb-8">
+      {/* ACTIONS - Responsive Buttons */}
+      <div className="flex flex-wrap gap-3 sm:gap-4 mb-6 sm:mb-8">
         <button
           onClick={() => setShowForm(true)}
-          className="flex gap-2 bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-700"
+          className="flex gap-2 bg-blue-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-blue-700 text-sm sm:text-base"
         >
           <Plus size={18}/> Add Vital
         </button>
 
         <button
           onClick={loadVitals}
-          className="flex gap-2 bg-green-600 px-6 py-3 rounded-xl hover:bg-green-700"
+          className="flex gap-2 bg-green-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-green-700 text-sm sm:text-base"
         >
-          <Activity size={18}/> Refresh Data
+          <Activity size={18}/> Refresh
         </button>
 
         <a
           href={`${API_URL}/api/vitals/download/all`}
-          className="flex gap-2 bg-slate-700 px-6 py-3 rounded-xl hover:bg-slate-600"
+          className="flex gap-2 bg-slate-700 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-slate-600 text-sm sm:text-base"
         >
-          <Download size={18}/> Download History
+          <Download size={18}/> Download
         </a>
 
         {linkedDoctor && (
           <>
             <button
               onClick={() => setShowMessages(true)}
-              className="flex gap-2 bg-purple-600 px-6 py-3 rounded-xl hover:bg-purple-700"
+              className="flex gap-2 bg-purple-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-purple-700 text-sm sm:text-base"
             >
               <MessageCircle size={18}/> Messages
             </button>
             <button
               onClick={unlinkDoctor}
-              className="flex gap-2 bg-red-600 px-6 py-3 rounded-xl hover:bg-red-700"
+              className="flex gap-2 bg-red-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-red-700 text-sm sm:text-base"
             >
-              <UserX size={18}/> Unlink Doctor
+              <UserX size={18}/> Unlink
             </button>
           </>
         )}
@@ -254,87 +253,89 @@ function PatientDashboard({ user, onLogout }) {
         </div>
       )}
 
-      {/* TABLE */}
+      {/* TABLE - Responsive with horizontal scroll */}
       {vitals.length > 0 ? (
         <div className="bg-white/5 rounded-3xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-white/10">
-              <tr>
-                <th className="p-4 text-left">Date</th>
-                <th className="p-4 text-left">Time</th>
-                <th className="p-4 text-center">HR</th>
-                <th className="p-4 text-center">BP</th>
-                <th className="p-4 text-center">O₂</th>
-                <th className="p-4 text-left">Notes</th>
-                <th className="p-4 text-center">Reaction</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vitals.map((v, idx) => (
-                <tr key={v.VitalID || idx} className="border-t border-white/10">
-                  <td className="p-4 text-left">{v.RecordedDate}</td>
-                  <td className="p-4 text-left">{v.RecordedTime}</td>
-                  <td className="p-4 text-center">{v.HeartRate}</td>
-                  <td className="p-4 text-center">{v.BloodPressureSys}/{v.BloodPressureDia}</td>
-                  <td className="p-4 text-center">{v.OxygenSaturation}%</td>
-                  <td className="p-4 text-left text-xs">{v.Notes || "-"}</td>
-                  <td className="p-4 text-center">
-                    {v.DoctorReaction === "IMPROVING" && "😊 Improving"}
-                    {v.DoctorReaction === "STABLE" && "😐 Stable"}
-                    {v.DoctorReaction === "CRITICAL" && "☹️ Needs Care"}
-                    {!v.DoctorReaction && "⏳ Pending"}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs sm:text-sm min-w-[600px]">
+              <thead className="bg-white/10">
+                <tr>
+                  <th className="p-2 sm:p-4 text-left">Date</th>
+                  <th className="p-2 sm:p-4 text-left">Time</th>
+                  <th className="p-2 sm:p-4 text-center">HR</th>
+                  <th className="p-2 sm:p-4 text-center">BP</th>
+                  <th className="p-2 sm:p-4 text-center">O₂</th>
+                  <th className="p-2 sm:p-4 text-left">Notes</th>
+                  <th className="p-2 sm:p-4 text-center">Reaction</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {vitals.map((v, idx) => (
+                  <tr key={v.VitalID || idx} className="border-t border-white/10">
+                    <td className="p-2 sm:p-4 text-left">{v.RecordedDate}</td>
+                    <td className="p-2 sm:p-4 text-left">{v.RecordedTime}</td>
+                    <td className="p-2 sm:p-4 text-center">{v.HeartRate}</td>
+                    <td className="p-2 sm:p-4 text-center">{v.BloodPressureSys}/{v.BloodPressureDia}</td>
+                    <td className="p-2 sm:p-4 text-center">{v.OxygenSaturation}%</td>
+                    <td className="p-2 sm:p-4 text-left text-xs">{v.Notes || "-"}</td>
+                    <td className="p-2 sm:p-4 text-center whitespace-nowrap">
+                      {v.DoctorReaction === "IMPROVING" && "😊 Improving"}
+                      {v.DoctorReaction === "STABLE" && "😐 Stable"}
+                      {v.DoctorReaction === "CRITICAL" && "☹️ Needs Care"}
+                      {!v.DoctorReaction && "⏳ Pending"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
-        <div className="bg-white/5 rounded-3xl p-10 text-center text-slate-400">
+        <div className="bg-white/5 rounded-3xl p-6 sm:p-10 text-center text-slate-400">
           <Activity size={48} className="mx-auto mb-4 opacity-50" />
-          <p className="text-lg">No vitals recorded yet. Add your first vital!</p>
-          <p className="text-sm mt-2">Click "Add Vital" button above to get started</p>
+          <p className="text-base sm:text-lg">No vitals recorded yet. Add your first vital!</p>
+          <p className="text-xs sm:text-sm mt-2">Click "Add Vital" button above to get started</p>
         </div>
       )}
 
-      {/* ADD VITAL MODAL */}
+      {/* ADD VITAL MODAL - Responsive */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-slate-900 p-8 rounded-3xl w-[420px]">
-            <h2 className="text-2xl font-semibold mb-6">Add Vital Signs</h2>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl w-full max-w-[420px]">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Add Vital Signs</h2>
 
             <div className="space-y-3">
               <input
                 type="number"
                 placeholder="Heart Rate (bpm) *"
-                className="w-full p-3 rounded bg-black/30 text-white"
+                className="w-full p-3 rounded bg-black/30 text-white text-sm sm:text-base"
                 value={form.HeartRate}
                 onChange={e => setForm({ ...form, HeartRate: e.target.value })}
               />
               <input
                 type="number"
                 placeholder="Blood Pressure Systolic *"
-                className="w-full p-3 rounded bg-black/30 text-white"
+                className="w-full p-3 rounded bg-black/30 text-white text-sm sm:text-base"
                 value={form.BloodPressureSys}
                 onChange={e => setForm({ ...form, BloodPressureSys: e.target.value })}
               />
               <input
                 type="number"
                 placeholder="Blood Pressure Diastolic *"
-                className="w-full p-3 rounded bg-black/30 text-white"
+                className="w-full p-3 rounded bg-black/30 text-white text-sm sm:text-base"
                 value={form.BloodPressureDia}
                 onChange={e => setForm({ ...form, BloodPressureDia: e.target.value })}
               />
               <input
                 type="number"
                 placeholder="Oxygen Saturation (%) *"
-                className="w-full p-3 rounded bg-black/30 text-white"
+                className="w-full p-3 rounded bg-black/30 text-white text-sm sm:text-base"
                 value={form.OxygenSaturation}
                 onChange={e => setForm({ ...form, OxygenSaturation: e.target.value })}
               />
               <textarea
                 placeholder="Notes (optional)"
-                className="w-full p-3 rounded bg-black/30 text-white"
+                className="w-full p-3 rounded bg-black/30 text-white text-sm sm:text-base"
                 rows={3}
                 value={form.Notes}
                 onChange={e => setForm({ ...form, Notes: e.target.value })}
@@ -342,10 +343,10 @@ function PatientDashboard({ user, onLogout }) {
             </div>
 
             <div className="flex gap-4 mt-6">
-              <button onClick={saveVital} className="flex-1 bg-green-600 py-3 rounded-xl hover:bg-green-700">
+              <button onClick={saveVital} className="flex-1 bg-green-600 py-3 rounded-xl hover:bg-green-700 text-sm sm:text-base">
                 Save Vital
               </button>
-              <button onClick={() => setShowForm(false)} className="flex-1 bg-red-600 py-3 rounded-xl hover:bg-red-700">
+              <button onClick={() => setShowForm(false)} className="flex-1 bg-red-600 py-3 rounded-xl hover:bg-red-700 text-sm sm:text-base">
                 Cancel
               </button>
             </div>
@@ -353,18 +354,18 @@ function PatientDashboard({ user, onLogout }) {
         </div>
       )}
 
-      {/* MESSAGES MODAL */}
+      {/* MESSAGES MODAL - Responsive */}
       {showMessages && linkedDoctor && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-slate-900 p-8 rounded-3xl w-[500px] max-h-[600px] flex flex-col">
-            <h2 className="text-2xl font-semibold mb-4">Messages with {linkedDoctor.DoctorRef}</h2>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl w-full max-w-[500px] max-h-[90vh] sm:max-h-[600px] flex flex-col">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4">Messages with {linkedDoctor.DoctorRef}</h2>
 
-            <div className="flex-1 overflow-y-auto mb-4 space-y-3 min-h-[300px]">
+            <div className="flex-1 overflow-y-auto mb-4 space-y-3 min-h-[200px] sm:min-h-[300px]">
               {messages.length > 0 ? (
                 messages.map((m, idx) => (
                   <div
                     key={m.id || idx}
-                    className={`p-3 rounded-xl ${
+                    className={`p-3 rounded-xl text-sm ${
                       m.from === PATIENT_REF
                         ? "bg-blue-600 ml-auto max-w-[80%]"
                         : "bg-slate-700 mr-auto max-w-[80%]"
@@ -386,19 +387,19 @@ function PatientDashboard({ user, onLogout }) {
               <input
                 type="text"
                 placeholder="Type a message..."
-                className="flex-1 p-3 rounded bg-black/30 text-white"
+                className="flex-1 p-3 rounded bg-black/30 text-white text-sm"
                 value={msgText}
                 onChange={e => setMsgText(e.target.value)}
                 onKeyPress={e => e.key === "Enter" && sendMessage()}
               />
-              <button onClick={sendMessage} className="bg-blue-600 px-6 py-3 rounded hover:bg-blue-700">
+              <button onClick={sendMessage} className="bg-blue-600 px-4 sm:px-6 py-3 rounded hover:bg-blue-700 text-sm">
                 Send
               </button>
             </div>
 
             <button
               onClick={() => setShowMessages(false)}
-              className="mt-4 bg-red-600 py-2 rounded-xl hover:bg-red-700"
+              className="mt-4 bg-red-600 py-2 rounded-xl hover:bg-red-700 text-sm"
             >
               Close
             </button>
@@ -412,10 +413,10 @@ function PatientDashboard({ user, onLogout }) {
 
 function Bento({ icon, label, value }) {
   return (
-    <div className="bg-white/5 p-6 rounded-3xl">
+    <div className="bg-white/5 p-4 sm:p-6 rounded-3xl">
       <div className="text-blue-400 mb-2">{icon}</div>
-      <p className="text-slate-400">{label}</p>
-      <h2 className="text-3xl font-bold">{value}</h2>
+      <p className="text-slate-400 text-sm sm:text-base">{label}</p>
+      <h2 className="text-2xl sm:text-3xl font-bold">{value}</h2>
     </div>
   );
 }

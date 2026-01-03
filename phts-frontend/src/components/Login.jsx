@@ -32,7 +32,6 @@ function Login({ onLogin }) {
         return;
       }
 
-      // 🔥 ROLE CHECK (IMPORTANT)
       if (d.role !== role) {
         alert(`This account is registered as ${d.role}. Please switch role.`);
         return;
@@ -50,7 +49,6 @@ function Login({ onLogin }) {
   async function signupSubmit(e) {
     e.preventDefault();
 
-    // ✅ Email validation on frontend
     if (!email.endsWith("@gmail.com")) {
       alert("Only @gmail.com emails are allowed!");
       return;
@@ -80,9 +78,7 @@ function Login({ onLogin }) {
     }
   }
 
-  // ✅ GOOGLE SIGN-IN HANDLER
   async function handleGoogleSignIn() {
-    // Load Google Sign-In API
     if (!window.google) {
       alert("Google Sign-In is loading... Please try again in a moment.");
       return;
@@ -90,13 +86,12 @@ function Login({ onLogin }) {
 
     try {
       const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com", // ⚠️ REPLACE THIS
+        client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
         scope: "email profile",
         callback: async (response) => {
           if (response.access_token) {
             setLoading(true);
             try {
-              // Get user info from Google
               const userInfo = await fetch(
                 `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${response.access_token}`
               );
@@ -104,13 +99,11 @@ function Login({ onLogin }) {
 
               console.log("Google user data:", userData);
 
-              // Only allow Gmail
               if (!userData.email.endsWith("@gmail.com")) {
                 alert("Only @gmail.com emails are allowed!");
                 return;
               }
 
-              // Send to backend
               const r = await fetch(`${API_URL}/api/users/google-signin`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -147,27 +140,26 @@ function Login({ onLogin }) {
 
   return (
     <AuthLayout>
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-white max-w-lg">
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 lg:p-10 text-white max-w-lg w-full">
         <RoleSwitch role={role} setRole={setRole} />
 
-        <div className="space-y-4 mt-6">
+        <div className="space-y-3 sm:space-y-4 mt-6">
           <button 
             onClick={() => setMode("login")} 
-            className="w-full py-4 bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50"
+            className="w-full py-3 sm:py-4 bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 text-sm sm:text-base"
             disabled={loading}
           >
             {loading ? "Loading..." : "Sign in"}
           </button>
           <button 
             onClick={() => setMode("signup")} 
-            className="w-full py-4 bg-white/10 rounded-xl hover:bg-white/20 disabled:opacity-50"
+            className="w-full py-3 sm:py-4 bg-white/10 rounded-xl hover:bg-white/20 disabled:opacity-50 text-sm sm:text-base"
             disabled={loading}
           >
             {loading ? "Loading..." : "Create account"}
           </button>
         </div>
 
-        {/* Debug info (remove in production) */}
         <p className="text-xs text-slate-500 mt-4 text-center">
           API: {API_URL}
         </p>
