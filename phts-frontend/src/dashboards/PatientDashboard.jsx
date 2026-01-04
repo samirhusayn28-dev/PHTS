@@ -9,7 +9,8 @@ import {
   MessageCircle,
   UserX
 } from "lucide-react";
-import { API_URL } from "../config";
+
+const API_URL = "http://localhost:5000";
 
 const EMPTY_VITAL = {
   HeartRate: "",
@@ -57,59 +58,141 @@ function PatientDashboard({ user, onLogout }) {
 
   /* ================= LOAD LINKED DOCTOR ================= */
   function loadLinkedDoctor() {
+    console.log("🔍 Loading linked doctor for patient:", PATIENT_REF);
     fetch(`${API_URL}/api/link/doctor/${PATIENT_REF}`)
       .then(r => r.json())
       .then(data => {
-        console.log("Linked doctor:", data);
+        console.log("✅ Linked doctor:", data);
         setLinkedDoctor(data);
       })
-      .catch(err => console.error("Error loading doctor:", err));
+      .catch(err => {
+        console.error("❌ Error loading doctor:", err);
+        setLinkedDoctor(null);
+      });
   }
 
   /* ================= LOAD MESSAGES ================= */
   function loadMessages() {
+    if (!linkedDoctor) {
+      console.log("⚠️ PATIENT - No linked doctor, cannot load messages");
+      setMessages([]);
+      return;
+    }
+    
+    console.log("📬 PATIENT - Loading messages for:", PATIENT_REF);
+    console.log("📬 PATIENT - Linked doctor:", linkedDoctor.DoctorRef);
+    
     fetch(`${API_URL}/api/messages/${PATIENT_REF}`)
-      .then(r => r.json())
-      .then(d => {
-        console.log("Messages loaded:", d);
-        setMessages(d);
+      .then(r => {
+        console.log("📬 PATIENT - Response status:", r.status);
+        return r.json();
       })
-      .catch(err => console.error("Error loading messages:", err));
+      .then(d => {
+        console.log("📬 PATIENT - Raw messages from server:", d);
+        console.log("📬 PATIENT - Number of messages:", d.length);
+        
+        const filtered = d.filter(m => {
+          const isFromPatient = m.from === PATIENT_REF && m.to === linkedDoctor.DoctorRef;
+          const isFromDoctor = m.from === linkedDoctor.DoctorRef && m.to === PATIENT_REF;
+          console.log(`📬 Message ${m.id}: from=${m.from}, to=${m.to}, match=${isFromPatient || isFromDoctor}`);
+          return isFromPatient || isFromDoctor;
+        });
+        
+        console.log("📬 PATIENT - Filtered messages:", filtered);
+        console.log("📬 PATIENT - Setting", filtered.length, "messages");
+        setMessages(filtered);
+      })
+      .catch(err => {
+        console.error("❌ PATIENT - Error loading messages:", err);
+        setMessages([]);
+      });
   }
 
   /* ================= UNLINK DOCTOR ================= */
   function unlinkDoctor() {
     if (!window.confirm("Are you sure you want to unlink from your doctor?")) return;
+    
+    console.log("🔗 Unlinking doctor:", linkedDoctor.DoctorRef);
+    
     fetch(`${API_URL}/api/link/${PATIENT_REF}`, {
       method: "DELETE"
-    }).then(() => {
-      setLinkedDoctor(null);
-      window.alert("Doctor unlinked successfully!");
-    });
+    })
+      .then(() => {
+        console.log("✅ Doctor unlinked successfully");
+        setLinkedDoctor(null);
+        setMessages([]);
+        alert("Doctor unlinked successfully!");
+      })
+      .catch(err => {
+        console.error("❌ Error unlinking doctor:", err);
+        alert("Failed to unlink doctor");
+      });
   }
 
   /* ================= SEND MESSAGE ================= */
   function sendMessage() {
-    if (!msgText.trim() || !linkedDoctor) return;
+    if (!msgText.trim()) {
+      console.log("⚠️ PATIENT - Empty message text");
+      return;
+    }
+    if (!linkedDoctor) {
+      console.log("⚠️ PATIENT - No linked doctor");
+      return;
+    }
+    
+    const payload = {
+      from: PATIENT_REF,
+      to: linkedDoctor.DoctorRef,
+      text: msgText
+    };
+    
+    console.log("📤 PATIENT - Sending message:", payload);
+    
     fetch(`${API_URL}/api/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: PATIENT_REF,
-        to: linkedDoctor.DoctorRef,
-        text: msgText
+      body: JSON.stringify(payload)
+    })
+      .then(r => {
+        console.log("📤 PATIENT - Send response status:", r.status);
+        return r.json();
       })
-    }).then(() => {
-      setMsgText("");
-      loadMessages();
-    });
+      .then(data => {
+        console.log("📤 PATIENT - Message sent successfully:", data);
+        setMsgText("");
+        setTimeout(() => {
+          console.log("🔄 PATIENT - Reloading messages after send");
+          loadMessages();
+        }, 300);
+      })
+      .catch(err => {
+        console.error("❌ PATIENT - Error sending message:", err);
+        alert("Failed to send message");
+      });
   }
 
+  /* ================= INITIAL LOAD ================= */
   useEffect(() => {
+    console.log("🚀 PATIENT - Initial load");
     loadVitals();
     loadLinkedDoctor();
-    loadMessages();
   }, []);
+
+  /* ================= LOAD MESSAGES WHEN DOCTOR IS LINKED ================= */
+  useEffect(() => {
+    if (linkedDoctor) {
+      console.log("🔄 PATIENT - Doctor linked, loading messages");
+      loadMessages();
+    }
+  }, [linkedDoctor]);
+
+  /* ================= RELOAD MESSAGES WHEN MODAL OPENS ================= */
+  useEffect(() => {
+    if (showMessages && linkedDoctor) {
+      console.log("🔄 PATIENT - Messages modal opened, reloading");
+      loadMessages();
+    }
+  }, [showMessages]);
 
   /* ================= SAVE VITAL ================= */
   function saveVital() {
@@ -181,7 +264,7 @@ function PatientDashboard({ user, onLogout }) {
           </p>
           {linkedDoctor && (
             <p className="text-green-400 text-xs sm:text-sm mt-1">
-              Linked to Doctor: {linkedDoctor.DoctorRef}
+              ✅ Linked to Doctor: {linkedDoctor.DoctorRef}
             </p>
           )}
         </div>
@@ -230,7 +313,10 @@ function PatientDashboard({ user, onLogout }) {
         {linkedDoctor && (
           <>
             <button
-              onClick={() => setShowMessages(true)}
+              onClick={() => {
+                console.log("🔘 Opening messages modal");
+                setShowMessages(true);
+              }}
               className="flex gap-2 bg-purple-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-purple-700 text-sm sm:text-base"
             >
               <MessageCircle size={18}/> Messages
@@ -358,9 +444,11 @@ function PatientDashboard({ user, onLogout }) {
       {showMessages && linkedDoctor && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl w-full max-w-[500px] max-h-[90vh] sm:max-h-[600px] flex flex-col">
-            <h2 className="text-xl sm:text-2xl font-semibold mb-4">Messages with {linkedDoctor.DoctorRef}</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4">
+              💬 Messages with {linkedDoctor.DoctorRef}
+            </h2>
 
-            <div className="flex-1 overflow-y-auto mb-4 space-y-3 min-h-[200px] sm:min-h-[300px]">
+            <div className="flex-1 overflow-y-auto mb-4 space-y-3 min-h-[200px] sm:min-h-[300px] bg-black/20 rounded-xl p-4">
               {messages.length > 0 ? (
                 messages.map((m, idx) => (
                   <div
@@ -392,13 +480,20 @@ function PatientDashboard({ user, onLogout }) {
                 onChange={e => setMsgText(e.target.value)}
                 onKeyPress={e => e.key === "Enter" && sendMessage()}
               />
-              <button onClick={sendMessage} className="bg-blue-600 px-4 sm:px-6 py-3 rounded hover:bg-blue-700 text-sm">
+              <button 
+                onClick={sendMessage} 
+                className="bg-blue-600 px-4 sm:px-6 py-3 rounded hover:bg-blue-700 text-sm"
+                disabled={!msgText.trim()}
+              >
                 Send
               </button>
             </div>
 
             <button
-              onClick={() => setShowMessages(false)}
+              onClick={() => {
+                console.log("🔘 Closing messages modal");
+                setShowMessages(false);
+              }}
               className="mt-4 bg-red-600 py-2 rounded-xl hover:bg-red-700 text-sm"
             >
               Close

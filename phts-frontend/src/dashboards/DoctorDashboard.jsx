@@ -7,7 +7,8 @@ import {
   MessageCircle,
   Link2
 } from "lucide-react";
-import { API_URL } from "../config";
+
+const API_URL = "http://localhost:5000";
 
 function DoctorDashboard({ user, onLogout }) {
   const DOCTOR_REF = user.reference;
@@ -27,17 +28,17 @@ function DoctorDashboard({ user, onLogout }) {
       return;
     }
 
-    console.log("🔍 Loading patient:", patientRef);
+    console.log("🔍 DOCTOR - Loading patient:", patientRef);
     setLoading(true);
     setError("");
 
     fetch(`${API_URL}/api/vitals/by-ref/${patientRef}`)
       .then(r => {
-        console.log("Response status:", r.status);
+        console.log("🔍 DOCTOR - Response status:", r.status);
         return r.json();
       })
       .then(d => {
-        console.log("✅ Patient vitals loaded:", d);
+        console.log("✅ DOCTOR - Patient vitals loaded:", d);
         if (d.length === 0) {
           setError("No vitals found. Patient may not be linked or has no records.");
         }
@@ -46,7 +47,7 @@ function DoctorDashboard({ user, onLogout }) {
         setLoading(false);
       })
       .catch(err => {
-        console.error("❌ Error loading patient:", err);
+        console.error("❌ DOCTOR - Error loading patient:", err);
         setError("Failed to load patient data");
         setLoading(false);
       });
@@ -58,7 +59,7 @@ function DoctorDashboard({ user, onLogout }) {
       return;
     }
 
-    console.log("🔗 Linking patient:", patientRef, "to doctor:", DOCTOR_REF);
+    console.log("🔗 DOCTOR - Linking patient:", patientRef, "to doctor:", DOCTOR_REF);
 
     fetch(`${API_URL}/api/link`, {
       method: "POST",
@@ -70,7 +71,7 @@ function DoctorDashboard({ user, onLogout }) {
     })
       .then(r => r.json())
       .then(data => {
-        console.log("✅ Link response:", data);
+        console.log("✅ DOCTOR - Link response:", data);
         if (data.error) {
           alert(data.error);
         } else {
@@ -81,13 +82,13 @@ function DoctorDashboard({ user, onLogout }) {
         }
       })
       .catch(err => {
-        console.error("❌ Error linking patient:", err);
+        console.error("❌ DOCTOR - Error linking patient:", err);
         alert("Failed to link patient");
       });
   }
 
   function setReaction(vitalId, reaction) {
-    console.log("💬 Setting reaction:", vitalId, "->", reaction);
+    console.log("💬 DOCTOR - Setting reaction:", vitalId, "->", reaction);
 
     fetch(`${API_URL}/api/vitals/reaction/${vitalId}`, {
       method: "PUT",
@@ -96,55 +97,96 @@ function DoctorDashboard({ user, onLogout }) {
     })
       .then(r => r.json())
       .then(data => {
-        console.log("✅ Reaction updated:", data);
+        console.log("✅ DOCTOR - Reaction updated:", data);
         loadPatient();
       })
       .catch(err => {
-        console.error("❌ Error setting reaction:", err);
+        console.error("❌ DOCTOR - Error setting reaction:", err);
       });
   }
 
   function loadMessages() {
-    if (!currentPatient) return;
+    if (!currentPatient) {
+      console.log("⚠️ DOCTOR - No current patient selected");
+      setMessages([]);
+      return;
+    }
     
-    console.log("📬 Loading messages for:", DOCTOR_REF);
+    console.log("📬 DOCTOR - Loading messages for doctor:", DOCTOR_REF);
+    console.log("📬 DOCTOR - Current patient:", currentPatient);
     
     fetch(`${API_URL}/api/messages/${DOCTOR_REF}`)
-      .then(r => r.json())
+      .then(r => {
+        console.log("📬 DOCTOR - Response status:", r.status);
+        return r.json();
+      })
       .then(d => {
-        console.log("All messages:", d);
-        const filtered = d.filter(m =>
-          (m.from === currentPatient && m.to === DOCTOR_REF) ||
-          (m.from === DOCTOR_REF && m.to === currentPatient)
-        );
-        console.log("Filtered messages:", filtered);
+        console.log("📬 DOCTOR - Raw messages from server:", d);
+        console.log("📬 DOCTOR - Number of messages:", d.length);
+        
+        const filtered = d.filter(m => {
+          const isFromPatient = m.from === currentPatient && m.to === DOCTOR_REF;
+          const isFromDoctor = m.from === DOCTOR_REF && m.to === currentPatient;
+          console.log(`📬 Message ${m.id}: from=${m.from}, to=${m.to}, match=${isFromPatient || isFromDoctor}`);
+          return isFromPatient || isFromDoctor;
+        });
+        
+        console.log("📬 DOCTOR - Filtered messages:", filtered);
+        console.log("📬 DOCTOR - Setting", filtered.length, "messages");
         setMessages(filtered);
       })
-      .catch(err => console.error("Error loading messages:", err));
+      .catch(err => {
+        console.error("❌ DOCTOR - Error loading messages:", err);
+        setMessages([]);
+      });
   }
 
   function sendMessage() {
-    if (!msgText.trim() || !currentPatient) return;
+    if (!msgText.trim()) {
+      console.log("⚠️ DOCTOR - Empty message text");
+      return;
+    }
+    if (!currentPatient) {
+      console.log("⚠️ DOCTOR - No current patient");
+      return;
+    }
+    
+    const payload = {
+      from: DOCTOR_REF,
+      to: currentPatient,
+      text: msgText
+    };
+    
+    console.log("📤 DOCTOR - Sending message:", payload);
     
     fetch(`${API_URL}/api/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: DOCTOR_REF,
-        to: currentPatient,
-        text: msgText
-      })
+      body: JSON.stringify(payload)
     })
-      .then(r => r.json())
-      .then(() => {
-        setMsgText("");
-        loadMessages();
+      .then(r => {
+        console.log("📤 DOCTOR - Send response status:", r.status);
+        return r.json();
       })
-      .catch(err => console.error("Error sending message:", err));
+      .then(data => {
+        console.log("📤 DOCTOR - Message sent successfully:", data);
+        setMsgText("");
+        setTimeout(() => {
+          console.log("🔄 DOCTOR - Reloading messages after send");
+          loadMessages();
+        }, 300);
+      })
+      .catch(err => {
+        console.error("❌ DOCTOR - Error sending message:", err);
+        alert("Failed to send message");
+      });
   }
 
   useEffect(() => {
-    if (showMessages) loadMessages();
+    if (showMessages && currentPatient) {
+      console.log("🔄 DOCTOR - Messages modal opened, loading messages");
+      loadMessages();
+    }
   }, [showMessages, currentPatient]);
 
   const critical = vitals.filter(v =>
@@ -165,7 +207,7 @@ function DoctorDashboard({ user, onLogout }) {
           </p>
           {currentPatient && (
             <p className="text-green-400 text-xs sm:text-sm mt-1">
-              Current Patient: {currentPatient}
+              ✅ Current Patient: {currentPatient}
             </p>
           )}
         </div>
@@ -209,7 +251,10 @@ function DoctorDashboard({ user, onLogout }) {
 
       {vitals.length > 0 && (
         <button
-          onClick={() => setShowMessages(true)}
+          onClick={() => {
+            console.log("🔘 DOCTOR - Opening messages modal");
+            setShowMessages(true);
+          }}
           className="mb-4 sm:mb-6 bg-purple-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-purple-700 flex gap-2 items-center text-sm sm:text-base"
         >
           <MessageCircle size={18}/> Messages with {currentPatient}
@@ -310,9 +355,11 @@ function DoctorDashboard({ user, onLogout }) {
       {showMessages && currentPatient && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl w-full max-w-[500px] max-h-[90vh] sm:max-h-[600px] flex flex-col">
-            <h2 className="text-xl sm:text-2xl font-semibold mb-4">Messages with {currentPatient}</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4">
+              💬 Messages with {currentPatient}
+            </h2>
 
-            <div className="flex-1 overflow-y-auto mb-4 space-y-3 min-h-[200px] sm:min-h-[300px]">
+            <div className="flex-1 overflow-y-auto mb-4 space-y-3 min-h-[200px] sm:min-h-[300px] bg-black/20 rounded-xl p-4">
               {messages.length > 0 ? (
                 messages.map((m, idx) => (
                   <div
@@ -344,13 +391,20 @@ function DoctorDashboard({ user, onLogout }) {
                 onChange={e => setMsgText(e.target.value)}
                 onKeyPress={e => e.key === "Enter" && sendMessage()}
               />
-              <button onClick={sendMessage} className="bg-blue-600 px-4 sm:px-6 py-3 rounded hover:bg-blue-700 text-sm">
+              <button 
+                onClick={sendMessage} 
+                className="bg-blue-600 px-4 sm:px-6 py-3 rounded hover:bg-blue-700 text-sm"
+                disabled={!msgText.trim()}
+              >
                 Send
               </button>
             </div>
 
             <button
-              onClick={() => setShowMessages(false)}
+              onClick={() => {
+                console.log("🔘 DOCTOR - Closing messages modal");
+                setShowMessages(false);
+              }}
               className="mt-4 bg-red-600 py-2 rounded-xl hover:bg-red-700 text-sm"
             >
               Close

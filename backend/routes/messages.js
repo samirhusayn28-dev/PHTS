@@ -7,6 +7,8 @@ router.get("/:ref", async (req, res) => {
   try {
     const userRef = req.params.ref;
     
+    console.log("📬 Fetching messages for:", userRef);
+    
     const messages = await Message.find({
       $or: [
         { from: userRef },
@@ -14,7 +16,8 @@ router.get("/:ref", async (req, res) => {
       ]
     }).sort({ createdAt: 1 });
 
-    console.log(`📬 Messages for ${userRef}:`, messages.length);
+    console.log(`✅ Found ${messages.length} messages for ${userRef}`);
+    console.log("Messages:", messages);
     
     const formatted = messages.map(m => ({
       id: m._id.toString(),
@@ -25,9 +28,10 @@ router.get("/:ref", async (req, res) => {
       time: m.time
     }));
 
+    console.log("📤 Sending formatted messages:", formatted);
     res.json(formatted);
   } catch (err) {
-    console.error("Error fetching messages:", err);
+    console.error("❌ Error fetching messages:", err);
     res.status(500).json({ error: "Failed to fetch messages" });
   }
 });
@@ -37,7 +41,10 @@ router.post("/", async (req, res) => {
   try {
     const { from, to, text } = req.body;
     
+    console.log("📥 Received message request:", { from, to, text });
+    
     if (!from || !to || !text) {
+      console.log("⚠️ Missing fields");
       return res.status(400).json({ error: "Missing required fields" });
     }
     
@@ -53,7 +60,7 @@ router.post("/", async (req, res) => {
 
     await message.save();
     
-    console.log("✅ Message sent:", message._id);
+    console.log("✅ Message saved:", message);
     res.json({ 
       success: true,
       message: {
