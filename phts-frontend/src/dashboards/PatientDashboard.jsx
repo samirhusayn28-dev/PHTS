@@ -10,7 +10,7 @@ import {
   UserX
 } from "lucide-react";
 
-// Update this to your actual API URL
+// ✅ FIXED: Use environment variable for API URL
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const EMPTY_VITAL = {
@@ -38,6 +38,7 @@ function PatientDashboard({ user, onLogout }) {
   /* ================= LOAD VITALS ================= */
   function loadVitals() {
     console.log("🔄 Loading vitals for UserID:", USER_ID);
+    console.log("🌐 Using API URL:", API_URL);
     setLoading(true);
     setError("");
     
@@ -236,7 +237,6 @@ function PatientDashboard({ user, onLogout }) {
       .then(r => {
         console.log("📡 Response status:", r.status);
         console.log("📡 Response ok:", r.ok);
-        console.log("📡 Response headers:", Object.fromEntries(r.headers.entries()));
         
         if (!r.ok) {
           return r.text().then(text => {
@@ -259,20 +259,14 @@ function PatientDashboard({ user, onLogout }) {
       })
       .catch(err => {
         console.error("❌ Error saving vital:", err);
-        console.error("❌ Error name:", err.name);
-        console.error("❌ Error message:", err.message);
-        console.error("❌ Error stack:", err.stack);
         setLoading(false);
         
         let errorMsg = "Failed to save vital.\n\n";
         
         if (err.message.includes("Failed to fetch")) {
           errorMsg += "❌ Cannot connect to server!\n\n";
-          errorMsg += `Check:\n`;
-          errorMsg += `1. Backend running on ${API_URL}?\n`;
-          errorMsg += `2. CORS enabled?\n`;
-          errorMsg += `3. Network tab in DevTools\n`;
-          errorMsg += `4. Try: curl ${API_URL}/\n`;
+          errorMsg += `Backend URL: ${API_URL}\n`;
+          errorMsg += `Check if backend is running and accessible.`;
         } else if (err.message.includes("HTTP")) {
           errorMsg += `Server error: ${err.message}`;
         } else {

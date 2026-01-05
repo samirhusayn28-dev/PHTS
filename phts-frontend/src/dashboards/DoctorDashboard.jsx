@@ -8,7 +8,8 @@ import {
   Link2
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000";
+// ✅ FIXED: Use environment variable for API URL
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 function DoctorDashboard({ user, onLogout }) {
   const DOCTOR_REF = user.reference;
@@ -29,12 +30,14 @@ function DoctorDashboard({ user, onLogout }) {
     }
 
     console.log("🔍 DOCTOR - Loading patient:", patientRef);
+    console.log("🌐 Using API URL:", API_URL);
     setLoading(true);
     setError("");
 
     fetch(`${API_URL}/api/vitals/by-ref/${patientRef}`)
       .then(r => {
         console.log("🔍 DOCTOR - Response status:", r.status);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
       .then(d => {
@@ -48,7 +51,7 @@ function DoctorDashboard({ user, onLogout }) {
       })
       .catch(err => {
         console.error("❌ DOCTOR - Error loading patient:", err);
-        setError("Failed to load patient data");
+        setError(`Failed to load patient data: ${err.message}`);
         setLoading(false);
       });
   }
@@ -69,7 +72,10 @@ function DoctorDashboard({ user, onLogout }) {
         PatientRef: patientRef
       })
     })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
         console.log("✅ DOCTOR - Link response:", data);
         if (data.error) {
@@ -83,7 +89,7 @@ function DoctorDashboard({ user, onLogout }) {
       })
       .catch(err => {
         console.error("❌ DOCTOR - Error linking patient:", err);
-        alert("Failed to link patient");
+        alert(`Failed to link patient: ${err.message}`);
       });
   }
 
@@ -95,13 +101,17 @@ function DoctorDashboard({ user, onLogout }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reaction })
     })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
         console.log("✅ DOCTOR - Reaction updated:", data);
         loadPatient();
       })
       .catch(err => {
         console.error("❌ DOCTOR - Error setting reaction:", err);
+        alert(`Failed to update reaction: ${err.message}`);
       });
   }
 
@@ -118,6 +128,7 @@ function DoctorDashboard({ user, onLogout }) {
     fetch(`${API_URL}/api/messages/${DOCTOR_REF}`)
       .then(r => {
         console.log("📬 DOCTOR - Response status:", r.status);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
       .then(d => {
@@ -166,6 +177,7 @@ function DoctorDashboard({ user, onLogout }) {
     })
       .then(r => {
         console.log("📤 DOCTOR - Send response status:", r.status);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
       .then(data => {
@@ -178,9 +190,14 @@ function DoctorDashboard({ user, onLogout }) {
       })
       .catch(err => {
         console.error("❌ DOCTOR - Error sending message:", err);
-        alert("Failed to send message");
+        alert(`Failed to send message: ${err.message}`);
       });
   }
+
+  useEffect(() => {
+    console.log("🚀 DOCTOR - Component mounted");
+    console.log("🌐 API_URL:", API_URL);
+  }, []);
 
   useEffect(() => {
     if (showMessages && currentPatient) {
@@ -204,6 +221,9 @@ function DoctorDashboard({ user, onLogout }) {
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Hey Doctor {user.name} 🩺</h1>
           <p className="text-slate-400 text-sm sm:text-base">
             Doctor Ref: <b className="text-blue-400">{DOCTOR_REF}</b>
+          </p>
+          <p className="text-slate-500 text-xs mt-1">
+            API: {API_URL}
           </p>
           {currentPatient && (
             <p className="text-green-400 text-xs sm:text-sm mt-1">
