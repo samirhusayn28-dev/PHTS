@@ -9,9 +9,10 @@ import {
   MessageCircle,
   UserX
 } from "lucide-react";
+import { API_URL } from "../config/api";
+
 
 // ✅ FIXED: Use environment variable for API URL
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const EMPTY_VITAL = {
   HeartRate: "",
