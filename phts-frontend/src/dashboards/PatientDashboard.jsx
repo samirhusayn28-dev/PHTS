@@ -10,7 +10,8 @@ import {
   UserX
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000";
+// Update this to your actual API URL
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const EMPTY_VITAL = {
   HeartRate: "",
@@ -38,20 +39,22 @@ function PatientDashboard({ user, onLogout }) {
   function loadVitals() {
     console.log("🔄 Loading vitals for UserID:", USER_ID);
     setLoading(true);
+    setError("");
+    
     fetch(`${API_URL}/api/vitals/${USER_ID}`)
       .then(r => {
         console.log("Response status:", r.status);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
       .then(d => {
         console.log("✅ Vitals loaded:", d);
         setVitals(d);
-        setError("");
         setLoading(false);
       })
       .catch(err => {
         console.error("❌ Error loading vitals:", err);
-        setError("Failed to load vitals");
+        setError(`Failed to load vitals: ${err.message}`);
         setLoading(false);
       });
   }
@@ -60,7 +63,10 @@ function PatientDashboard({ user, onLogout }) {
   function loadLinkedDoctor() {
     console.log("🔍 Loading linked doctor for patient:", PATIENT_REF);
     fetch(`${API_URL}/api/link/doctor/${PATIENT_REF}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
         console.log("✅ Linked doctor:", data);
         setLinkedDoctor(data);
@@ -80,26 +86,22 @@ function PatientDashboard({ user, onLogout }) {
     }
     
     console.log("📬 PATIENT - Loading messages for:", PATIENT_REF);
-    console.log("📬 PATIENT - Linked doctor:", linkedDoctor.DoctorRef);
     
     fetch(`${API_URL}/api/messages/${PATIENT_REF}`)
       .then(r => {
-        console.log("📬 PATIENT - Response status:", r.status);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
       .then(d => {
-        console.log("📬 PATIENT - Raw messages from server:", d);
-        console.log("📬 PATIENT - Number of messages:", d.length);
+        console.log("📬 PATIENT - Messages received:", d.length);
         
         const filtered = d.filter(m => {
           const isFromPatient = m.from === PATIENT_REF && m.to === linkedDoctor.DoctorRef;
           const isFromDoctor = m.from === linkedDoctor.DoctorRef && m.to === PATIENT_REF;
-          console.log(`📬 Message ${m.id}: from=${m.from}, to=${m.to}, match=${isFromPatient || isFromDoctor}`);
           return isFromPatient || isFromDoctor;
         });
         
-        console.log("📬 PATIENT - Filtered messages:", filtered);
-        console.log("📬 PATIENT - Setting", filtered.length, "messages");
+        console.log("📬 PATIENT - Filtered messages:", filtered.length);
         setMessages(filtered);
       })
       .catch(err => {
@@ -117,6 +119,10 @@ function PatientDashboard({ user, onLogout }) {
     fetch(`${API_URL}/api/link/${PATIENT_REF}`, {
       method: "DELETE"
     })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(() => {
         console.log("✅ Doctor unlinked successfully");
         setLinkedDoctor(null);
@@ -125,7 +131,7 @@ function PatientDashboard({ user, onLogout }) {
       })
       .catch(err => {
         console.error("❌ Error unlinking doctor:", err);
-        alert("Failed to unlink doctor");
+        alert(`Failed to unlink doctor: ${err.message}`);
       });
   }
 
@@ -154,26 +160,24 @@ function PatientDashboard({ user, onLogout }) {
       body: JSON.stringify(payload)
     })
       .then(r => {
-        console.log("📤 PATIENT - Send response status:", r.status);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
       .then(data => {
         console.log("📤 PATIENT - Message sent successfully:", data);
         setMsgText("");
-        setTimeout(() => {
-          console.log("🔄 PATIENT - Reloading messages after send");
-          loadMessages();
-        }, 300);
+        setTimeout(() => loadMessages(), 300);
       })
       .catch(err => {
         console.error("❌ PATIENT - Error sending message:", err);
-        alert("Failed to send message");
+        alert(`Failed to send message: ${err.message}`);
       });
   }
 
   /* ================= INITIAL LOAD ================= */
   useEffect(() => {
     console.log("🚀 PATIENT - Initial load");
+    console.log("🌐 API_URL:", API_URL);
     loadVitals();
     loadLinkedDoctor();
   }, []);
@@ -197,6 +201,7 @@ function PatientDashboard({ user, onLogout }) {
   /* ================= SAVE VITAL ================= */
   function saveVital() {
     console.log("💾 Attempting to save vital...");
+    console.log("🌐 API URL:", API_URL);
     
     if (!form.HeartRate || !form.BloodPressureSys || !form.BloodPressureDia || !form.OxygenSaturation) {
       alert("Please fill all required fields!");
@@ -216,20 +221,36 @@ function PatientDashboard({ user, onLogout }) {
     };
 
     console.log("📤 Sending payload:", payload);
+    console.log("📤 Full URL:", `${API_URL}/api/vitals`);
+    
+    setLoading(true);
+    setError("");
 
     fetch(`${API_URL}/api/vitals`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(payload)
     })
       .then(r => {
-        console.log("Response status:", r.status);
+        console.log("📡 Response status:", r.status);
+        console.log("📡 Response ok:", r.ok);
+        console.log("📡 Response headers:", Object.fromEntries(r.headers.entries()));
+        
+        if (!r.ok) {
+          return r.text().then(text => {
+            console.error("❌ Response body:", text);
+            throw new Error(`HTTP ${r.status}: ${text}`);
+          });
+        }
         return r.json();
       })
       .then(data => {
         console.log("✅ Server response:", data);
         setShowForm(false);
         setForm(EMPTY_VITAL);
+        setLoading(false);
         alert("Vital saved successfully!");
         setTimeout(() => {
           console.log("🔄 Reloading vitals after save...");
@@ -238,7 +259,28 @@ function PatientDashboard({ user, onLogout }) {
       })
       .catch(err => {
         console.error("❌ Error saving vital:", err);
-        alert("Failed to save vital. Check console for details.");
+        console.error("❌ Error name:", err.name);
+        console.error("❌ Error message:", err.message);
+        console.error("❌ Error stack:", err.stack);
+        setLoading(false);
+        
+        let errorMsg = "Failed to save vital.\n\n";
+        
+        if (err.message.includes("Failed to fetch")) {
+          errorMsg += "❌ Cannot connect to server!\n\n";
+          errorMsg += `Check:\n`;
+          errorMsg += `1. Backend running on ${API_URL}?\n`;
+          errorMsg += `2. CORS enabled?\n`;
+          errorMsg += `3. Network tab in DevTools\n`;
+          errorMsg += `4. Try: curl ${API_URL}/\n`;
+        } else if (err.message.includes("HTTP")) {
+          errorMsg += `Server error: ${err.message}`;
+        } else {
+          errorMsg += err.message;
+        }
+        
+        setError(errorMsg);
+        alert(errorMsg);
       });
   }
 
@@ -262,6 +304,9 @@ function PatientDashboard({ user, onLogout }) {
           <p className="text-slate-400 text-xs sm:text-sm">
             User ID: <b className="text-blue-400">{USER_ID}</b>
           </p>
+          <p className="text-slate-500 text-xs mt-1">
+            API: {API_URL}
+          </p>
           {linkedDoctor && (
             <p className="text-green-400 text-xs sm:text-sm mt-1">
               ✅ Linked to Doctor: {linkedDoctor.DoctorRef}
@@ -276,7 +321,7 @@ function PatientDashboard({ user, onLogout }) {
       {/* ERROR MESSAGE */}
       {error && (
         <div className="bg-red-500/20 border border-red-500 p-3 sm:p-4 rounded-xl mb-4 sm:mb-6">
-          <p className="text-red-300 text-sm sm:text-base">⚠️ {error}</p>
+          <p className="text-red-300 text-sm sm:text-base whitespace-pre-wrap">⚠️ {error}</p>
         </div>
       )}
 
@@ -291,14 +336,16 @@ function PatientDashboard({ user, onLogout }) {
       <div className="flex flex-wrap gap-3 sm:gap-4 mb-6 sm:mb-8">
         <button
           onClick={() => setShowForm(true)}
-          className="flex gap-2 bg-blue-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-blue-700 text-sm sm:text-base"
+          disabled={loading}
+          className="flex gap-2 bg-blue-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-blue-700 disabled:opacity-50 text-sm sm:text-base"
         >
           <Plus size={18}/> Add Vital
         </button>
 
         <button
           onClick={loadVitals}
-          className="flex gap-2 bg-green-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-green-700 text-sm sm:text-base"
+          disabled={loading}
+          className="flex gap-2 bg-green-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-green-700 disabled:opacity-50 text-sm sm:text-base"
         >
           <Activity size={18}/> Refresh
         </button>
@@ -313,10 +360,7 @@ function PatientDashboard({ user, onLogout }) {
         {linkedDoctor && (
           <>
             <button
-              onClick={() => {
-                console.log("🔘 Opening messages modal");
-                setShowMessages(true);
-              }}
+              onClick={() => setShowMessages(true)}
               className="flex gap-2 bg-purple-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-purple-700 text-sm sm:text-base"
             >
               <MessageCircle size={18}/> Messages
@@ -335,7 +379,7 @@ function PatientDashboard({ user, onLogout }) {
       {loading && (
         <div className="text-center text-slate-400 mb-6">
           <Activity size={32} className="mx-auto mb-2 animate-spin" />
-          <p>Loading vitals...</p>
+          <p>Loading...</p>
         </div>
       )}
 
@@ -376,7 +420,7 @@ function PatientDashboard({ user, onLogout }) {
             </table>
           </div>
         </div>
-      ) : (
+      ) : !loading && (
         <div className="bg-white/5 rounded-3xl p-6 sm:p-10 text-center text-slate-400">
           <Activity size={48} className="mx-auto mb-4 opacity-50" />
           <p className="text-base sm:text-lg">No vitals recorded yet. Add your first vital!</p>
@@ -429,10 +473,21 @@ function PatientDashboard({ user, onLogout }) {
             </div>
 
             <div className="flex gap-4 mt-6">
-              <button onClick={saveVital} className="flex-1 bg-green-600 py-3 rounded-xl hover:bg-green-700 text-sm sm:text-base">
-                Save Vital
+              <button 
+                onClick={saveVital} 
+                disabled={loading}
+                className="flex-1 bg-green-600 py-3 rounded-xl hover:bg-green-700 disabled:opacity-50 text-sm sm:text-base"
+              >
+                {loading ? "Saving..." : "Save Vital"}
               </button>
-              <button onClick={() => setShowForm(false)} className="flex-1 bg-red-600 py-3 rounded-xl hover:bg-red-700 text-sm sm:text-base">
+              <button 
+                onClick={() => {
+                  setShowForm(false);
+                  setError("");
+                }} 
+                disabled={loading}
+                className="flex-1 bg-red-600 py-3 rounded-xl hover:bg-red-700 disabled:opacity-50 text-sm sm:text-base"
+              >
                 Cancel
               </button>
             </div>
@@ -490,10 +545,7 @@ function PatientDashboard({ user, onLogout }) {
             </div>
 
             <button
-              onClick={() => {
-                console.log("🔘 Closing messages modal");
-                setShowMessages(false);
-              }}
+              onClick={() => setShowMessages(false)}
               className="mt-4 bg-red-600 py-2 rounded-xl hover:bg-red-700 text-sm"
             >
               Close
