@@ -7,9 +7,7 @@ import {
   MessageCircle,
   Link2
 } from "lucide-react";
-
-// ✅ FIXED: Use environment variable for API URL
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { API_URL } from "../config/api"; // ✅ FIXED: Import from config
 
 function DoctorDashboard({ user, onLogout }) {
   const DOCTOR_REF = user.reference;

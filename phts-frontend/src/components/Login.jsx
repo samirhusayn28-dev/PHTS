@@ -4,7 +4,7 @@ import AuthModal from "./AuthModal";
 import RoleSwitch from "./RoleSwitch";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
-import { API_URL } from "../config";
+import { API_URL } from "../config/api"; // ✅ FIXED: Import from config
 
 function Login({ onLogin }) {
   const [role, setRole] = useState("patient");
