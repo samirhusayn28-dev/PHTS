@@ -17,8 +17,9 @@ app.use(cors({
     const allowedOrigins = [
       "http://localhost:3000",
       "http://localhost:5173",
+      "https://phts.vercel.app",
       "https://phts-samirhusayn28-devs-projects.vercel.app",
-      /^https:\/\/phts-.*\.vercel\.app$/  // Any Vercel preview deployment
+      /^https:\/\/phts(-.*)?\.vercel\.app$/  // Production + any Vercel preview deployment
     ];
     
     const isAllowed = allowedOrigins.some(pattern => {
