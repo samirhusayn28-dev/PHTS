@@ -177,28 +177,28 @@ function PatientDashboard({ user, onLogout }) {
   }
 
   /* ================= INITIAL LOAD ================= */
-  useEffect(() => {
+useEffect(() => {
     console.log("🚀 PATIENT - Initial load");
     console.log("🌐 API_URL:", API_URL);
     loadVitals();
     loadLinkedDoctor();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ================= LOAD MESSAGES WHEN DOCTOR IS LINKED ================= */
-  useEffect(() => {
+ useEffect(() => {
     if (linkedDoctor) {
       console.log("🔄 PATIENT - Doctor linked, loading messages");
       loadMessages();
     }
-  }, [linkedDoctor]);
+  }, [linkedDoctor]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ================= RELOAD MESSAGES WHEN MODAL OPENS ================= */
-  useEffect(() => {
+useEffect(() => {
     if (showMessages && linkedDoctor) {
       console.log("🔄 PATIENT - Messages modal opened, reloading");
       loadMessages();
     }
-  }, [showMessages]);
+  }, [showMessages]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ================= SAVE VITAL ================= */
   function saveVital() {

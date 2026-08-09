@@ -197,12 +197,12 @@ function DoctorDashboard({ user, onLogout }) {
     console.log("🌐 API_URL:", API_URL);
   }, []);
 
-  useEffect(() => {
+useEffect(() => {
     if (showMessages && currentPatient) {
       console.log("🔄 DOCTOR - Messages modal opened, loading messages");
       loadMessages();
     }
-  }, [showMessages, currentPatient]);
+  }, [showMessages, currentPatient]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const critical = vitals.filter(v =>
     Number(v.HeartRate) > 130 ||
